@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+venv/
+.venv/
+env/
+
+# Django
+db.sqlite3
+media/
+
+# Environment variables and secrets
+.env
+.env.*
+
+# React / Node.js
+node_modules/
+dist/
+build/
+
+# IDE and editor
+.vscode/
+.idea/
+
+# Operating system
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
