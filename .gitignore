@@ -10,10 +10,12 @@ env/
 # Django
 db.sqlite3
 media/
+staticfiles/
 
 # Environment variables and secrets
 .env
 .env.*
+!.env.example
 
 # React / Node.js
 node_modules/
