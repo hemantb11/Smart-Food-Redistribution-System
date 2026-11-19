@@ -118,3 +118,14 @@ class DistributionPoint(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.ngo.organisation_name}"
+
+
+class ContactMessage(models.Model):
+    name = models.CharField(max_length=255)
+    email = models.EmailField()
+    inquiry_type = models.CharField(max_length=100, blank=True, default="General")
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.inquiry_type}"

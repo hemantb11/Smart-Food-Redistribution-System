@@ -1,7 +1,14 @@
+from accounts.models import VolunteerProfile
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
-
-from .models import *
+from .models import (
+    User,
+    DonorProfile,
+    NGOProfile,
+    VolunteerProfile,
+    DistributionPoint,
+    ContactMessage,
+)
 
 
 class DonorProfileSerializer(serializers.ModelSerializer):
@@ -20,10 +27,18 @@ class NGOProfileSerializer(serializers.ModelSerializer):
 
 class VolunteerProfileSerializer(serializers.ModelSerializer):
     ngo_name = serializers.ReadOnlyField(source="ngo.organisation_name")
+    username = serializers.ReadOnlyField(source="user.username")
+    email = serializers.ReadOnlyField(source="user.email")
+    phone = serializers.ReadOnlyField(source="user.phone")
+    user_id = serializers.ReadOnlyField(source="user.id")
 
     class Meta:
         model = VolunteerProfile
-        fields = ["id", "ngo", "ngo_name", "availability_status", "service_area", "ngo_approved", "created_at"]
+        fields = [
+            "id", "user_id", "username", "email", "phone",
+            "ngo", "ngo_name", "availability_status", "service_area",
+            "ngo_approved", "created_at"
+        ]
         read_only_fields = ["ngo_approved", "created_at"]
 
 
@@ -59,16 +74,27 @@ class UserSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True)
+    organisation_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    address = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    service_area = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    ngo = serializers.PrimaryKeyRelatedField(
+        queryset=NGOProfile.objects.filter(verification_status=User.AccountStatus.VERIFIED),
+        write_only=True,
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "phone", "role", "password", "password2"]
+        fields = [
+            "id", "username", "email", "phone", "role",
+            "password", "password2", "organisation_name",
+            "address", "service_area", "ngo"
+        ]
 
     def validate_role(self, value):
         if value not in (User.Role.DONOR, User.Role.NGO, User.Role.VOLUNTEER):
-            raise serializers.ValidationError(
-                "Role must be DONOR, NGO or VOLUNTEER."
-            )
+            raise serializers.ValidationError("Role must be DONOR, NGO or VOLUNTEER.")
         return value
 
     def validate(self, attrs):
@@ -79,16 +105,40 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop("password2")
         password = validated_data.pop("password")
+        org_name = validated_data.pop("organisation_name", "").strip()
+        address = validated_data.pop("address", "").strip()
+        service_area = validated_data.pop("service_area", "").strip()
+        ngo = validated_data.pop("ngo", None)
+
         user = User(**validated_data)
         user.set_password(password)
         user.save()
 
-        # Role nusar default profiles automated creation
         if user.role == User.Role.DONOR:
-            DonorProfile.objects.create(user=user, organisation_name=user.username, address="")
+            DonorProfile.objects.create(
+                user=user,
+                organisation_name=org_name or user.username,
+                address=address,
+            )
         elif user.role == User.Role.NGO:
-            NGOProfile.objects.create(user=user, organisation_name=user.username, service_area="", address="")
+            NGOProfile.objects.create(
+                user=user,
+                organisation_name=org_name or user.username,
+                service_area=service_area,
+                address=address,
+            )
         elif user.role == User.Role.VOLUNTEER:
-            VolunteerProfile.objects.create(user=user, service_area="")
+            VolunteerProfile.objects.create(
+                user=user,
+                ngo=ngo,
+                service_area=service_area,
+                ngo_approved=False,
+            )
 
         return user
+
+
+class ContactMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactMessage
+        fields = ["id", "name", "email", "inquiry_type", "message", "created_at"]

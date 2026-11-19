@@ -1,5 +1,5 @@
+from decimal import Decimal
 from django.db import models
-from django.conf import settings
 from accounts.models import DonorProfile
 
 
@@ -57,36 +57,36 @@ class DonationStatus(models.TextChoices):
 
 class FoodDonation(models.Model):
     donor = models.ForeignKey(
-        DonorProfile, 
-        on_delete=models.CASCADE, 
+        DonorProfile,
+        on_delete=models.CASCADE,
         related_name='donations'
     )
     category = models.ForeignKey(
-        FoodCategory, 
-        on_delete=models.PROTECT, 
+        FoodCategory,
+        on_delete=models.PROTECT,
         related_name='donations'
     )
     food_name = models.CharField(max_length=255)
     unit = models.CharField(max_length=50, help_text="e.g. kg, litres, portions, pieces")
-    
+
     # Quantity Model (SRS Section 5.1)
     total_quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    reserved_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    distributed_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    reserved_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    distributed_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
 
     # Food Safety Fields (SRS Section 6.2)
     food_type = models.CharField(max_length=20, choices=FoodType.choices)
     food_state = models.CharField(max_length=20, choices=FoodState.choices)
     prepared_at = models.DateTimeField(null=True, blank=True)
-    consume_by = models.DateTimeField()
+    consume_by = models.DateTimeField(null=True, blank=True)
     best_before = models.DateField(null=True, blank=True)
     pickup_deadline = models.DateTimeField()
     earliest_pickup = models.DateTimeField(null=True, blank=True)
-    
+
     storage_condition = models.CharField(max_length=20, choices=StorageCondition.choices)
     packaging = models.CharField(max_length=250, choices=PackagingType.choices)
     allergens = models.CharField(
-        max_length=255, 
+        max_length=255,
         help_text="Comma-separated list or 'None declared'/'Unknown'"
     )
     ingredients_notes = models.TextField(blank=True, null=True)
@@ -95,10 +95,10 @@ class FoodDonation(models.Model):
     image = models.ImageField(upload_to='donations/', null=True, blank=True)
     donor_declared_at = models.DateTimeField(null=True, blank=True)
 
-    # Status & Optimistic Concurrency Control (SRS Section 4.2 & Section 5.5)
+    # Status & Optimistic Concurrency Control (SRS Section 4.2 & 5.5)
     status = models.CharField(
-        max_length=20, 
-        choices=DonationStatus.choices, 
+        max_length=20,
+        choices=DonationStatus.choices,
         default=DonationStatus.DRAFT
     )
     version = models.PositiveIntegerField(default=1)
@@ -106,10 +106,27 @@ class FoodDonation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(total_quantity__gt=Decimal('0.00')),
+                name='donation_total_qty_positive'
+            ),
+            models.CheckConstraint(
+                condition=models.Q(reserved_quantity__gte=Decimal('0.00')),
+                name='donation_reserved_qty_non_negative'
+            ),
+            models.CheckConstraint(
+                condition=models.Q(reserved_quantity__lte=models.F('total_quantity')),
+                name='donation_reserved_lte_total'
+            ),
+        ]
+
     @property
     def available_quantity(self):
-        """Computed field: A = Total - Reserved"""
-        return self.total_quantity - self.reserved_quantity
+        total = Decimal(str(self.total_quantity or 0))
+        reserved = Decimal(str(self.reserved_quantity or 0))
+        return total - reserved
 
     def __str__(self):
         return f"{self.food_name} ({self.total_quantity} {self.unit}) - {self.status}"

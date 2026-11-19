@@ -1,7 +1,9 @@
+from accounts.models import VolunteerProfile
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 from .models import *
+from .models import ContactMessage
 
 
 @admin.register(User)
@@ -42,3 +44,10 @@ class DistributionPointAdmin(admin.ModelAdmin):
     list_display = ("name", "ngo", "type", "usual_headcount", "is_active")
     list_filter = ("is_active", "type")
     search_fields = ("name", "ngo__organisation_name")
+
+
+@admin.register(ContactMessage)
+class ContactMessageAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email', 'inquiry_type', 'created_at')
+    search_fields = ('name', 'email', 'message')
+    readonly_fields = ('created_at',)

@@ -4,7 +4,8 @@ from .views import (
     FoodDonationListCreateView,
     FoodDonationDetailView,
     PublishDonationView,
-    WithdrawDonationView
+    WithdrawDonationView,
+    CloseDonationRemainderView
 )
 
 urlpatterns = [
@@ -13,4 +14,5 @@ urlpatterns = [
     path('<int:pk>/', FoodDonationDetailView.as_view(), name='donation_detail'),
     path('<int:pk>/publish/', PublishDonationView.as_view(), name='publish_donation'),
     path('<int:pk>/withdraw/', WithdrawDonationView.as_view(), name='withdraw_donation'),
+    path('<int:pk>/close-remainder/', CloseDonationRemainderView.as_view(), name='donation-close-remainder'),
 ]

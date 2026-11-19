@@ -1,41 +1,51 @@
+from decimal import Decimal
 from rest_framework import serializers
 from .models import DistributionRecord
-from donations.models import DonationStatus
 
 
 class DistributionRecordSerializer(serializers.ModelSerializer):
     ngo_name = serializers.ReadOnlyField(source='ngo.organisation_name')
     point_name = serializers.ReadOnlyField(source='distribution_point.name')
+    food_name = serializers.ReadOnlyField(source='request.donation.food_name')
+    donation_unit = serializers.ReadOnlyField(source='request.donation.unit')
+    beneficiaries_served = serializers.ReadOnlyField()
+    confirmed_by_name = serializers.ReadOnlyField(source='confirmed_by.username')
 
     class Meta:
         model = DistributionRecord
         fields = [
-            'id', 'request', 'ngo', 'ngo_name', 'distribution_point', 'point_name',
-            'actual_headcount_served', 'quantity_distributed', 'photo', 'notes', 'completed_at'
+            'id', 'request', 'food_name', 'donation_unit', 'ngo', 'ngo_name',
+            'distribution_point', 'point_name', 'actual_headcount_served',
+            'beneficiaries_served', 'quantity_distributed', 'discarded_quantity',
+            'discard_reason', 'photo', 'notes', 'feedback_note',
+            'distributed_at', 'confirmed_at', 'confirmed_by', 'confirmed_by_name'
         ]
-        read_only_fields = ['ngo', 'completed_at']
+        read_only_fields = ['ngo', 'distributed_at', 'confirmed_at', 'confirmed_by']
+        extra_kwargs = {
+            'distribution_point': {'required': False},
+            'discarded_quantity': {'required': False, 'default': Decimal('0.00')},
+        }
 
     def validate(self, attrs):
         req = attrs.get('request')
-        distributed_qty = attrs.get('quantity_distributed')
+        dist_qty = Decimal(str(attrs.get('quantity_distributed', '0.00')))
+        disc_qty = Decimal(str(attrs.get('discarded_quantity', '0.00')))
+        discard_reason = attrs.get('discard_reason')
 
-        if req.status not in ['ACCEPTED', 'PARTIALLY_ACCEPTED']:
-            raise serializers.ValidationError({"request": "Distribution record can only be created for ACCEPTED requests."})
+        if req and req.status not in ['ACCEPTED', 'PARTIALLY_ACCEPTED']:
+            raise serializers.ValidationError({
+                "request": "Distribution record can only be created for ACCEPTED or PARTIALLY_ACCEPTED requests."
+            })
 
-        if distributed_qty <= 0:
-            raise serializers.ValidationError({"quantity_distributed": "Distributed quantity must be greater than 0."})
+        if dist_qty < Decimal('0.00') or disc_qty < Decimal('0.00'):
+            raise serializers.ValidationError("Distributed and discarded quantities cannot be negative.")
+
+        if dist_qty == Decimal('0.00') and disc_qty == Decimal('0.00'):
+            raise serializers.ValidationError("Enter either distributed quantity or discarded quantity greater than 0.")
+
+        if disc_qty > Decimal('0.00') and (not discard_reason or not str(discard_reason).strip()):
+            raise serializers.ValidationError({
+                "discard_reason": "A discard reason is required when discarded quantity is greater than 0."
+            })
 
         return attrs
-
-    def create(self, validated_data):
-        record = super().create(validated_data)
-        
-        # Sync donation distributed_quantity & update status if fully distributed
-        donation = record.request.donation
-        donation.distributed_quantity = float(donation.distributed_quantity) + float(record.quantity_distributed)
-        
-        if donation.distributed_quantity >= donation.total_quantity:
-            donation.status = DonationStatus.COMPLETED
-            
-        donation.save()
-        return record
