@@ -158,11 +158,7 @@ class Command(BaseCommand):
                             Decimal('0.00'),
                             Decimal(str(don.reserved_quantity)) - Decimal(str(req.accepted_quantity)),
                         )
-                        don.total_quantity = max(
-                            don.reserved_quantity,
-                            Decimal(str(don.total_quantity)) - Decimal(str(req.accepted_quantity)),
-                        )
-                        don.save(update_fields=['total_quantity', 'reserved_quantity'])
+                        don.save(update_fields=['reserved_quantity'])
 
                 _recalculate_donation_status(
                     don,
