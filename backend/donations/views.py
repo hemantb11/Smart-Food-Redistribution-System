@@ -1,8 +1,9 @@
 from decimal import Decimal
+from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.utils import timezone
 
 from core.permissions import IsDonor, IsVerified, IsAdminRole
 from notifications.models import Notification
@@ -17,6 +18,8 @@ from allocations.services import (
 from .models import FoodCategory, FoodDonation, DonationStatus
 from .serializers import FoodCategorySerializer, FoodDonationSerializer
 
+User = get_user_model()
+
 
 def _handle_service_error(exc):
     if isinstance(exc, ServiceValidationError):
@@ -29,6 +32,56 @@ def _handle_service_error(exc):
             status=status.HTTP_409_CONFLICT,
         )
     return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+def _expire_overdue_donations():
+    """Automatically mark unaccepted/overdue active listings as EXPIRED once pickup_deadline passes."""
+    now = timezone.now()
+    overdue_qs = FoodDonation.objects.filter(
+        status__in=[DonationStatus.AVAILABLE, DonationStatus.PARTIALLY_RESERVED],
+        pickup_deadline__lte=now,
+    ).select_related('donor__user')
+
+    for donation in overdue_qs:
+        donation.status = DonationStatus.EXPIRED
+        donation.save(update_fields=['status'])
+
+        # Notify Donor that unaccepted/remaining food has expired
+        if donation.donor and donation.donor.user:
+            Notification.objects.create(
+                recipient=donation.donor.user,
+                title="Food Listing Expired",
+                message=(
+                    f"Pickup deadline passed for '{donation.food_name}'. "
+                    f"Listing has been automatically marked as EXPIRED."
+                ),
+                event_type='DONATION_EXPIRED',
+                related_entity_type='DONATION',
+                related_entity_id=donation.id,
+            )
+
+
+def _notify_ngos_new_donation(donation):
+    ngo_users = User.objects.filter(role='NGO', is_active=True)
+    if hasattr(User, 'account_status'):
+        ngo_users = ngo_users.filter(account_status='VERIFIED')
+
+    notifications = [
+        Notification(
+            recipient=ngo_user,
+            title="New Surplus Food Available",
+            message=(
+                f"{donation.food_name} ({donation.available_quantity} {donation.unit}) "
+                f"is now available for pickup at {donation.location}."
+            ),
+            event_type='DONATION_PUBLISHED',
+            related_entity_type='DONATION',
+            related_entity_id=donation.id,
+        )
+        for ngo_user in ngo_users
+    ]
+    if notifications:
+        Notification.objects.bulk_create(notifications)
 
 
 class FoodCategoryListView(generics.ListCreateAPIView):
@@ -46,6 +99,9 @@ class FoodDonationListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated, IsVerified]
 
     def get_queryset(self):
+        # Auto-expire any listings whose pickup deadline has passed
+        _expire_overdue_donations()
+
         user = self.request.user
         queryset = FoodDonation.objects.select_related('donor', 'category').all()
 
@@ -55,7 +111,7 @@ class FoodDonationListCreateView(generics.ListCreateAPIView):
         if user.role == 'ADMIN' or user.is_superuser:
             return queryset.order_by('-created_at')
 
-        # NGOs browse only verified donors' AVAILABLE & PARTIALLY_RESERVED listings (FR-11 & Section 11.1)
+        # All Verified NGOs browse verified donors' AVAILABLE & PARTIALLY_RESERVED listings
         status_param = self.request.query_params.get('status')
         if status_param:
             queryset = queryset.filter(status=status_param)
@@ -111,6 +167,7 @@ class FoodDonationListCreateView(generics.ListCreateAPIView):
         if request.data.get('publish_now'):
             try:
                 donation = publish_donation(donation.id, request.user)
+                _notify_ngos_new_donation(donation)
             except Exception as exc:
                 return _handle_service_error(exc)
 
@@ -173,6 +230,7 @@ class PublishDonationView(APIView):
             )
         try:
             donation = publish_donation(pk, request.user)
+            _notify_ngos_new_donation(donation)
             return Response({
                 "message": "Donation published successfully and is now AVAILABLE to NGOs.",
                 "donation": FoodDonationSerializer(donation).data,

@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../services/axios';
 import {
-  Utensils,
   LogOut,
   ShieldCheck,
   LayoutDashboard,
@@ -15,6 +14,87 @@ import {
   Menu,
   X,
 } from 'lucide-react';
+
+const getNotificationRoute = (notif, role) => {
+  const eventType = (notif.event_type || '').toUpperCase();
+  const entityType = (notif.related_entity_type || '').toUpperCase();
+  const text = `${notif.title || ''} ${notif.message || ''}`.toLowerCase();
+
+  if (
+    eventType.includes('VERIF') ||
+    eventType.includes('APPROV') ||
+    entityType === 'USER' ||
+    text.includes('verified') ||
+    text.includes('ngo approved')
+  ) {
+    return role === 'ADMIN' ? '/admin-panel' : '/profile';
+  }
+
+  if (
+    eventType.includes('SAFETY') ||
+    eventType.includes('REPORT') ||
+    entityType === 'SAFETY_REPORT' ||
+    text.includes('safety report')
+  ) {
+    return role === 'ADMIN' ? '/admin-panel' : '/dashboard';
+  }
+
+  if (role === 'DONOR') {
+    if (
+      entityType === 'DONATION_REQUEST' ||
+      entityType === 'REQUEST' ||
+      entityType === 'ASSIGNMENT' ||
+      eventType.includes('REQUEST') ||
+      eventType.includes('VOLUNTEER') ||
+      eventType.includes('PICKUP') ||
+      eventType.includes('DELIVER') ||
+      text.includes('request') ||
+      text.includes('ngo') ||
+      text.includes('otp') ||
+      text.includes('volunteer')
+    ) {
+      return '/incoming-requests';
+    }
+    return '/my-donations';
+  }
+
+  if (role === 'NGO') {
+    if (
+      entityType === 'DONATION' &&
+      !text.includes('request') &&
+      !text.includes('accepted') &&
+      !text.includes('rejected')
+    ) {
+      return '/browse-donations';
+    }
+    if (entityType === 'DISTRIBUTION' || eventType.includes('DISTRIBUTION')) {
+      return '/distributions';
+    }
+    return '/my-requests';
+  }
+
+  if (role === 'VOLUNTEER') {
+    if (
+      entityType === 'ASSIGNMENT' ||
+      entityType === 'TASK' ||
+      eventType.includes('ASSIGN') ||
+      eventType.includes('DELIVER') ||
+      eventType.includes('PICKUP') ||
+      text.includes('task') ||
+      text.includes('delivery') ||
+      text.includes('assigned')
+    ) {
+      return '/volunteer-tasks';
+    }
+    return '/dashboard';
+  }
+
+  if (role === 'ADMIN') {
+    return '/admin-panel';
+  }
+
+  return '/dashboard';
+};
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -62,14 +142,28 @@ export default function Navbar() {
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
       );
-    } catch {}
+    } catch {
+      // ignore mark-read network error
+    }
   };
 
   const markAllRead = async () => {
     try {
       await API.post('notifications/read-all/');
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    } catch {}
+    } catch {
+      // ignore mark-all-read network error
+    }
+  };
+
+  const handleNotificationClick = (notif) => {
+    if (!notif.is_read) {
+      markRead(notif.id);
+    }
+    setNotifOpen(false);
+    setMobileOpen(false);
+    const targetPath = getNotificationRoute(notif, user?.role);
+    navigate(targetPath);
   };
 
   const handleLogout = () => {
@@ -84,18 +178,39 @@ export default function Navbar() {
   return (
     <nav className="bg-[#2c3e50] sticky top-0 z-50 shadow-md px-6 sm:px-10 py-3.5">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Brand Logo */}
+        {/* Brand Logo: FoodBridge */}
         <Link
           to="/"
           onClick={() => setMobileOpen(false)}
-          className="flex items-center gap-2.5 group transition-transform hover:scale-105"
+          className="flex items-center gap-3 group transition-transform hover:scale-105"
         >
-          <div className="p-2 bg-[#f1c40f] rounded-lg text-[#2c3e50]">
-            <Utensils className="w-5 h-5" />
+          <div className="w-10 h-10 bg-linear-to-br from-[#f1c40f] to-amber-500 rounded-xl flex items-center justify-center shadow-md text-[#2c3e50]">
+            {/* Custom Bridge + Food Bowl SVG Logo */}
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              className="w-6 h-6"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              {/* Bridge Arch */}
+              <path d="M3 12c2.5-4.5 6.2-6.5 9-6.5s6.5 2 9 6.5" />
+              <path d="M6 12v-2.5M12 12V6M18 12v-2.5" />
+              {/* Serving Bowl Base */}
+              <path d="M4 13h16a8 8 0 0 1-16 0Z" fill="currentColor" fillOpacity="0.2" />
+              <path d="M8 20h8" />
+            </svg>
           </div>
-          <span className="text-xl sm:text-2xl font-semibold tracking-wide text-[#f1c40f]">
-            Smart<span className="text-white">Food</span>
-          </span>
+          <div className="flex flex-col leading-tight">
+            <span className="text-xl sm:text-2xl font-bold tracking-wide text-[#f1c40f]">
+              Food<span className="text-white">Bridge</span>
+            </span>
+            <span className="text-[10px] tracking-widest uppercase text-gray-300 font-medium">
+              Surplus to Shelter
+            </span>
+          </div>
         </Link>
 
         {/* Center Navigation Links (Desktop) */}
@@ -109,7 +224,7 @@ export default function Navbar() {
                 Dashboard
               </Link>
               <Link to="/reports" className={navLinkClass}>
-                Reports & Audit
+                Reports &amp; Audit
               </Link>
               <Link to="/profile" className={navLinkClass}>
                 Profile
@@ -146,7 +261,7 @@ export default function Navbar() {
                     setNotifOpen(!notifOpen);
                     if (!notifOpen) fetchNotifications();
                   }}
-                  className="relative p-2 rounded-full bg-[#34495e] text-white hover:text-[#f1c40f] transition cursor-pointer"
+                  className="relative p-2 rounded-full bg-navy-800 text-white hover:text-[#f1c40f] transition cursor-pointer"
                   title="Notifications"
                 >
                   <Bell className="w-4 h-4" />
@@ -182,12 +297,12 @@ export default function Navbar() {
                         notifications.map((n) => (
                           <div
                             key={n.id}
-                            onClick={() => !n.is_read && markRead(n.id)}
+                            onClick={() => handleNotificationClick(n)}
                             className={`p-3.5 text-xs transition cursor-pointer ${
                               n.is_read
                                 ? 'bg-white text-gray-600'
                                 : 'bg-amber-50/70 text-gray-900 font-medium'
-                            } hover:bg-gray-50`}
+                            } hover:bg-amber-50`}
                           >
                             <div className="flex items-start justify-between gap-2">
                               <p className="font-semibold text-[#2c3e50]">{n.title}</p>
@@ -196,9 +311,10 @@ export default function Navbar() {
                               )}
                             </div>
                             <p className="mt-1 text-gray-600 leading-relaxed">{n.message}</p>
-                            <p className="mt-1 text-[10px] text-gray-400">
-                              {new Date(n.created_at).toLocaleString()}
-                            </p>
+                            <div className="mt-1.5 flex items-center justify-between text-[10px] text-gray-400">
+                              <span>{new Date(n.created_at).toLocaleString()}</span>
+                              <span className="font-semibold text-[#2c3e50]">View →</span>
+                            </div>
                           </div>
                         ))
                       )}
@@ -207,7 +323,7 @@ export default function Navbar() {
                 )}
               </div>
 
-              <div className="flex items-center gap-2 bg-[#34495e] border border-white/15 px-3.5 py-1.5 rounded-full text-xs font-medium text-white">
+              <div className="flex items-center gap-2 bg-navy-800 border border-white/15 px-3.5 py-1.5 rounded-full text-xs font-medium text-white">
                 <ShieldCheck className="w-4 h-4 text-[#f1c40f]" />
                 <span className="text-[#f1c40f] font-semibold uppercase">
                   {user.role}
@@ -255,22 +371,42 @@ export default function Navbar() {
       {/* Mobile Dropdown Menu */}
       {mobileOpen && (
         <div className="md:hidden mt-4 pt-4 border-t border-white/15 flex flex-col gap-3">
-          <Link to="/" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-white hover:text-[#f1c40f] py-1">
+          <Link
+            to="/"
+            onClick={() => setMobileOpen(false)}
+            className="text-sm font-medium text-white hover:text-[#f1c40f] py-1"
+          >
             Home
           </Link>
           {user ? (
             <>
-              <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-white hover:text-[#f1c40f] py-1 flex items-center gap-2">
+              <Link
+                to="/dashboard"
+                onClick={() => setMobileOpen(false)}
+                className="text-sm font-medium text-white hover:text-[#f1c40f] py-1 flex items-center gap-2"
+              >
                 <LayoutDashboard className="w-4 h-4 text-[#f1c40f]" /> Dashboard
               </Link>
-              <Link to="/reports" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-white hover:text-[#f1c40f] py-1 flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-[#f1c40f]" /> Reports & Audit
+              <Link
+                to="/reports"
+                onClick={() => setMobileOpen(false)}
+                className="text-sm font-medium text-white hover:text-[#f1c40f] py-1 flex items-center gap-2"
+              >
+                <BarChart3 className="w-4 h-4 text-[#f1c40f]" /> Reports &amp; Audit
               </Link>
-              <Link to="/profile" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-white hover:text-[#f1c40f] py-1 flex items-center gap-2">
-                <UserCircle className="w-4 h-4 text-[#f1c40f]" /> Profile & Settings
+              <Link
+                to="/profile"
+                onClick={() => setMobileOpen(false)}
+                className="text-sm font-medium text-white hover:text-[#f1c40f] py-1 flex items-center gap-2"
+              >
+                <UserCircle className="w-4 h-4 text-[#f1c40f]" /> Profile &amp; Settings
               </Link>
               {user.role === 'ADMIN' && (
-                <Link to="/admin-panel" onClick={() => setMobileOpen(false)} className="text-sm font-semibold text-[#f1c40f] py-1 flex items-center gap-2">
+                <Link
+                  to="/admin-panel"
+                  onClick={() => setMobileOpen(false)}
+                  className="text-sm font-semibold text-[#f1c40f] py-1 flex items-center gap-2"
+                >
                   <ShieldAlert className="w-4 h-4" /> Admin Console
                 </Link>
               )}
@@ -284,10 +420,18 @@ export default function Navbar() {
             </>
           ) : (
             <div className="flex items-center gap-4 pt-2">
-              <Link to="/login" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-white hover:text-[#f1c40f]">
+              <Link
+                to="/login"
+                onClick={() => setMobileOpen(false)}
+                className="text-sm font-medium text-white hover:text-[#f1c40f]"
+              >
                 Login
               </Link>
-              <Link to="/register" onClick={() => setMobileOpen(false)} className="bg-[#f1c40f] text-[#2c3e50] text-xs font-semibold px-5 py-2 rounded-full">
+              <Link
+                to="/register"
+                onClick={() => setMobileOpen(false)}
+                className="bg-[#f1c40f] text-[#2c3e50] text-xs font-semibold px-5 py-2 rounded-full"
+              >
                 Get Started
               </Link>
             </div>
