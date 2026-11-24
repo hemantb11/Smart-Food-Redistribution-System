@@ -12,6 +12,7 @@ import {
   Sparkles,
   ShieldAlert,
   Filter,
+  Search,
 } from 'lucide-react';
 
 export default function BrowseDonations() {
@@ -215,33 +216,48 @@ export default function BrowseDonations() {
   });
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-10">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#2c3e50] border-b-4 border-[#f1c40f] inline-block pb-1">
-          Browse Available Surplus Food
-        </h1>
-        <p className="text-xs text-[#666666] mt-2">
-          Filter by diet, storage state &amp; AI relevance match to claim verified surplus meals.
-        </p>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+      {/* HEADER BANNER */}
+      <div className="relative rounded-2xl overflow-hidden shadow-md bg-[#2c3e50] border-b-4 border-[#f1c40f]">
+        <img
+          src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1400&q=80"
+          alt="Browse Available Food"
+          className="absolute inset-0 w-full h-full object-cover opacity-20"
+        />
+        <div className="relative z-10 p-6 sm:p-8 space-y-1.5">
+          <span className="inline-flex items-center gap-1.5 bg-[#f1c40f] text-[#2c3e50] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
+            <Sparkles className="w-3.5 h-3.5" />
+            AI-Matched Surplus Feed
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">
+            Browse Available Surplus Food
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-200 max-w-2xl">
+            Filter by diet, storage state &amp; AI relevance match to claim verified surplus meals for your shelters.
+          </p>
+        </div>
       </div>
 
-      {/* Search & Safety Filters */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-[#2c3e50]">
+      {/* SEARCH & SAFETY FILTERS */}
+      <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-1.5 text-xs font-bold text-[#2c3e50]">
           <Filter className="w-4 h-4 text-[#f1c40f]" />
           <span>Filters:</span>
         </div>
-        <input
-          type="text"
-          placeholder="Search food, area, or allergen..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-1 min-w-45 border border-[#dddddd] rounded-md px-3 py-1.5 text-xs"
-        />
+        <div className="relative flex-1 min-w-48">
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Search food, area, or allergen..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-xs text-[#2c3e50] focus:bg-white focus:border-[#2c3e50] outline-none"
+          />
+        </div>
         <select
           value={dietFilter}
           onChange={(e) => setDietFilter(e.target.value)}
-          className="border border-[#dddddd] rounded-md px-3 py-1.5 text-xs bg-white"
+          className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#2c3e50] focus:bg-white focus:border-[#2c3e50] outline-none"
         >
           <option value="">All Diet Types</option>
           <option value="VEGETARIAN">Vegetarian</option>
@@ -252,7 +268,7 @@ export default function BrowseDonations() {
         <select
           value={stateFilter}
           onChange={(e) => setStateFilter(e.target.value)}
-          className="border border-[#dddddd] rounded-md px-3 py-1.5 text-xs bg-white"
+          className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#2c3e50] focus:bg-white focus:border-[#2c3e50] outline-none"
         >
           <option value="">All Food States</option>
           <option value="COOKED_MEAL">Cooked Meal</option>
@@ -264,28 +280,28 @@ export default function BrowseDonations() {
       </div>
 
       {successMsg && (
-        <div className="mb-5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium p-3.5 rounded-lg flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium p-3.5 rounded-xl flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{successMsg}</span>
         </div>
       )}
 
       {errorMsg && !selectedFood && !reportFood && (
-        <div className="mb-5 bg-red-50 border border-red-200 text-red-700 text-xs font-medium p-3.5 rounded-lg flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0" />
+        <div className="bg-red-50 border border-red-200 text-red-700 text-xs font-medium p-3.5 rounded-xl flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {loading ? (
-        <p className="text-sm text-[#666666]">Loading active food donations...</p>
+        <p className="text-sm text-slate-500">Loading active food donations...</p>
       ) : filteredDonations.length === 0 ? (
-        <div className="bg-white rounded-xl p-10 text-center shadow-sm border border-slate-200">
-          <Utensils className="w-10 h-10 text-[#2c3e50] mx-auto mb-3" />
-          <h3 className="text-base font-semibold text-[#2c3e50]">
+        <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-slate-100">
+          <Utensils className="w-11 h-11 text-[#2c3e50] mx-auto mb-3 opacity-80" />
+          <h3 className="text-base font-bold text-[#2c3e50]">
             No Matching Food Listings Right Now
           </h3>
-          <p className="text-xs text-[#666666] mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Adjust filters or check back shortly as donors publish new surplus meals.
           </p>
         </div>
@@ -296,19 +312,19 @@ export default function BrowseDonations() {
             return (
               <div
                 key={food.id}
-                className="bg-white rounded-xl p-6 shadow-[0_5px_15px_rgba(0,0,0,0.06)] border-b-4 border-[#f1c40f] flex flex-col justify-between"
+                className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 border-b-4 border-b-[#f1c40f] flex flex-col justify-between hover:shadow-md transition"
               >
                 <div>
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <h3 className="text-lg font-semibold text-[#2c3e50]">{food.food_name}</h3>
-                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-semibold px-2.5 py-0.5 rounded-full shrink-0">
+                  <div className="flex items-start justify-between gap-2 mb-2.5">
+                    <h3 className="text-lg font-bold text-[#2c3e50]">{food.food_name}</h3>
+                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full shrink-0">
                       {food.status === 'PARTIALLY_RESERVED' ? 'PARTIAL POOL' : 'LIVE'}
                     </span>
                   </div>
 
-                  {/* AI Match Badge (SRS Section 11.1) */}
+                  {/* AI Match Badge */}
                   {match && (
-                    <div className="mb-3 bg-amber-50 border border-amber-200 text-amber-900 px-2.5 py-1.5 rounded-lg text-[11px] flex items-center gap-1.5">
+                    <div className="mb-3 bg-amber-50 border border-amber-200 text-amber-900 px-3 py-2 rounded-xl text-[11px] flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                       <span>
                         <strong>{match.match_score ?? match.score}% Match:</strong>{' '}
@@ -318,28 +334,28 @@ export default function BrowseDonations() {
                   )}
 
                   {/* Diet, State & Storage Pills */}
-                  <div className="flex flex-wrap gap-1.5 mb-3 text-[10px] font-semibold">
-                    <span className="bg-slate-100 text-[#2c3e50] px-2 py-0.5 rounded">
+                  <div className="flex flex-wrap gap-1.5 mb-3.5 text-[10px] font-bold">
+                    <span className="bg-slate-100 text-[#2c3e50] px-2.5 py-0.5 rounded-md">
                       {food.food_type}
                     </span>
                     {food.food_state && (
-                      <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                      <span className="bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-md">
                         {food.food_state}
                       </span>
                     )}
                     {food.storage_condition && (
-                      <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
+                      <span className="bg-sky-50 text-sky-700 px-2.5 py-0.5 rounded-md">
                         {food.storage_condition}
                       </span>
                     )}
                   </div>
 
-                  <div className="space-y-1.5 text-xs text-[#555555]">
+                  <div className="space-y-1.5 text-xs text-slate-600">
                     <p className="flex items-center gap-2">
                       <Package className="w-4 h-4 text-[#2c3e50] shrink-0" />
                       <span>
                         Available:{' '}
-                        <strong>
+                        <strong className="text-emerald-700">
                           {food.available_quantity ?? food.total_quantity} {food.unit}
                         </strong>
                       </span>
@@ -359,17 +375,17 @@ export default function BrowseDonations() {
                       </p>
                     )}
                     {food.allergens && (
-                      <p className="text-[11px] text-amber-800">
+                      <p className="text-[11px] text-amber-800 bg-amber-50/70 px-2.5 py-1 rounded-lg mt-1">
                         <strong>Allergens:</strong> {food.allergens}
                       </p>
                     )}
                   </div>
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-slate-100 flex items-center gap-2">
+                <div className="mt-5 pt-4 border-t border-slate-100 flex items-center gap-2">
                   <button
                     onClick={() => openClaimModal(food)}
-                    className="flex-1 bg-[#2c3e50] hover:bg-[#f1c40f] text-white hover:text-[#2c3e50] text-xs font-semibold py-2.5 rounded-md transition cursor-pointer"
+                    className="flex-1 bg-[#2c3e50] hover:bg-[#f1c40f] text-white hover:text-[#2c3e50] text-xs font-bold py-2.5 rounded-xl transition cursor-pointer"
                   >
                     Request Food
                   </button>
@@ -379,7 +395,7 @@ export default function BrowseDonations() {
                       setReportReason('');
                     }}
                     title="Report Food Safety Concern"
-                    className="p-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-md transition cursor-pointer"
+                    className="p-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl transition cursor-pointer"
                   >
                     <ShieldAlert className="w-4 h-4" />
                   </button>
@@ -392,9 +408,9 @@ export default function BrowseDonations() {
 
       {/* CLAIM MODAL */}
       {selectedFood && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-xl border-b-4 border-[#f1c40f] max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border-b-4 border-[#f1c40f] max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
               <h3 className="text-lg font-bold text-[#2c3e50]">
                 Claim: {selectedFood.food_name}
               </h3>
@@ -407,7 +423,7 @@ export default function BrowseDonations() {
             </div>
 
             {errorMsg && (
-              <div className="mb-4 bg-red-50 border border-red-200 text-red-700 text-xs p-3 rounded-md">
+              <div className="mb-4 bg-red-50 border border-red-200 text-red-700 text-xs p-3 rounded-xl">
                 {errorMsg}
               </div>
             )}
@@ -415,9 +431,9 @@ export default function BrowseDonations() {
             {points.length === 0 ? (
               <form
                 onSubmit={handleCreatePoint}
-                className="space-y-3 bg-slateDark-950 p-4 rounded-lg border"
+                className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200"
               >
-                <p className="text-xs font-semibold text-[#2c3e50]">
+                <p className="text-xs font-bold text-[#2c3e50]">
                   First, add an NGO Distribution Point / Shelter Address:
                 </p>
                 <input
@@ -426,14 +442,14 @@ export default function BrowseDonations() {
                   placeholder="Shelter / Center Name (e.g. Aashray Seva Shelter)"
                   value={newPoint.name}
                   onChange={(e) => setNewPoint({ ...newPoint, name: e.target.value })}
-                  className="w-full border rounded px-3 py-2 text-xs bg-white"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white"
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <select
                     required
                     value={newPoint.type}
                     onChange={(e) => setNewPoint({ ...newPoint, type: e.target.value })}
-                    className="w-full border rounded px-3 py-2 text-xs bg-white"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white"
                   >
                     <option value="SHELTER">Shelter Home</option>
                     <option value="ORPHANAGE">Orphanage</option>
@@ -449,7 +465,7 @@ export default function BrowseDonations() {
                     onChange={(e) =>
                       setNewPoint({ ...newPoint, usual_headcount: e.target.value })
                     }
-                    className="w-full border rounded px-3 py-2 text-xs bg-white"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white"
                   />
                 </div>
                 <input
@@ -458,11 +474,11 @@ export default function BrowseDonations() {
                   placeholder="Full Delivery Address"
                   value={newPoint.address}
                   onChange={(e) => setNewPoint({ ...newPoint, address: e.target.value })}
-                  className="w-full border rounded px-3 py-2 text-xs bg-white"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white"
                 />
                 <button
                   type="submit"
-                  className="bg-[#2c3e50] text-white text-xs font-semibold px-4 py-2 rounded cursor-pointer"
+                  className="bg-[#2c3e50] text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer"
                 >
                   Save Delivery Point
                 </button>
@@ -470,7 +486,7 @@ export default function BrowseDonations() {
             ) : (
               <form onSubmit={handleRequestSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold uppercase mb-1">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
                     Delivery Distribution Point
                   </label>
                   <select
@@ -479,7 +495,7 @@ export default function BrowseDonations() {
                     onChange={(e) =>
                       setReqForm({ ...reqForm, distribution_point: e.target.value })
                     }
-                    className="w-full bg-[#f9f9f9] border border-[#dddddd] rounded-md px-3 py-2 text-sm"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-[#2c3e50]"
                   >
                     {points.map((pt) => (
                       <option key={pt.id} value={pt.id}>
@@ -491,7 +507,7 @@ export default function BrowseDonations() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold uppercase mb-1">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
                       Requested ({selectedFood.unit})
                     </label>
                     <input
@@ -504,11 +520,11 @@ export default function BrowseDonations() {
                       onChange={(e) =>
                         setReqForm({ ...reqForm, requested_quantity: e.target.value })
                       }
-                      className="w-full bg-[#f9f9f9] border border-[#dddddd] rounded-md px-3 py-2 text-sm"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#2c3e50]"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold uppercase mb-1">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
                       Min Acceptable
                     </label>
                     <input
@@ -523,11 +539,11 @@ export default function BrowseDonations() {
                           min_acceptable_quantity: e.target.value,
                         })
                       }
-                      className="w-full bg-[#f9f9f9] border border-[#dddddd] rounded-md px-3 py-2 text-sm"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#2c3e50]"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold uppercase mb-1">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
                       Beneficiaries
                     </label>
                     <input
@@ -541,13 +557,13 @@ export default function BrowseDonations() {
                           expected_beneficiaries: e.target.value,
                         })
                       }
-                      className="w-full bg-[#f9f9f9] border border-[#dddddd] rounded-md px-3 py-2 text-sm"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#2c3e50]"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase mb-1">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
                     Note to Donor
                   </label>
                   <textarea
@@ -555,18 +571,18 @@ export default function BrowseDonations() {
                     value={reqForm.message}
                     onChange={(e) => setReqForm({ ...reqForm, message: e.target.value })}
                     placeholder="Pickup timing or container requirements..."
-                    className="w-full bg-[#f9f9f9] border border-[#dddddd] rounded-md px-3 py-2 text-sm"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-[#2c3e50]"
                   />
                 </div>
 
-                <label className="flex items-start gap-2 text-xs text-[#555555] cursor-pointer">
+                <label className="flex items-start gap-2.5 text-xs text-slate-600 bg-amber-50/70 p-3 rounded-xl border border-amber-200 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={reqForm.safetyAck}
                     onChange={(e) =>
                       setReqForm({ ...reqForm, safetyAck: e.target.checked })
                     }
-                    className="mt-0.5"
+                    className="mt-0.5 accent-[#2c3e50]"
                   />
                   <span>
                     We acknowledge food shelf-life limits ({selectedFood.allergens || 'checked allergens'}) and will inspect hygiene before beneficiary distribution.
@@ -576,7 +592,7 @@ export default function BrowseDonations() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full bg-[#2c3e50] hover:bg-[#f1c40f] text-white hover:text-[#2c3e50] text-xs font-semibold py-2.5 rounded-md flex items-center justify-center gap-2 transition cursor-pointer"
+                  className="w-full bg-[#2c3e50] hover:bg-[#f1c40f] text-white hover:text-[#2c3e50] text-xs font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition cursor-pointer"
                 >
                   <span>{submitting ? 'Sending Request...' : 'Confirm Food Request'}</span>
                   <Send className="w-3.5 h-3.5" />
@@ -589,11 +605,11 @@ export default function BrowseDonations() {
 
       {/* SAFETY REPORT MODAL */}
       {reportFood && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl border-b-4 border-red-500">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border-b-4 border-rose-500">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-base font-bold text-[#2c3e50] flex items-center gap-2">
-                <ShieldAlert className="w-5 h-5 text-red-600" />
+                <ShieldAlert className="w-5 h-5 text-rose-600" />
                 <span>Report Safety Concern</span>
               </h3>
               <button
@@ -603,8 +619,8 @@ export default function BrowseDonations() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-xs text-gray-500 mb-3">
-              Flagging <strong>{reportFood.food_name}</strong> for Administrator review.
+            <p className="text-xs text-slate-500 mb-3">
+              Flagging <strong>{reportFood.food_name}</strong> for FoodBridge Administrator review.
             </p>
             <form onSubmit={handleSafetyReport} className="space-y-3">
               <textarea
@@ -613,12 +629,12 @@ export default function BrowseDonations() {
                 placeholder="Describe hygiene, packaging, or expiry concern..."
                 value={reportReason}
                 onChange={(e) => setReportReason(e.target.value)}
-                className="w-full border border-gray-300 rounded-md p-2.5 text-xs"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-[#2c3e50]"
               />
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-2.5 rounded-md cursor-pointer"
+                className="w-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold py-2.5 rounded-xl cursor-pointer"
               >
                 {submitting ? 'Submitting...' : 'Submit Safety Report'}
               </button>

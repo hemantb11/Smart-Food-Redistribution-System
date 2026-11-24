@@ -8,6 +8,7 @@ import {
   KeyRound,
   AlertCircle,
   Clock,
+  Inbox,
 } from 'lucide-react';
 
 export default function IncomingRequests() {
@@ -113,18 +114,28 @@ export default function IncomingRequests() {
     );
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-10">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[#2c3e50] border-b-4 border-[#f1c40f] inline-block pb-1">
-          Incoming NGO Requests
-        </h1>
-        <p className="text-xs text-[#666666] mt-2">
-          Accept full or partial quantities, reject with a reason code, and share the 6-digit Pickup OTP with the NGO&apos;s volunteer.
-        </p>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+      {/* HEADER BANNER */}
+      <div className="relative rounded-2xl overflow-hidden shadow-md bg-[#2c3e50] border-b-4 border-[#f1c40f]">
+        <img
+          src="https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=1400&q=80"
+          alt="Incoming NGO Requests"
+          className="absolute inset-0 w-full h-full object-cover opacity-20"
+        />
+        <div className="relative z-10 p-6 sm:p-8 space-y-1.5">
+          <span className="inline-flex items-center gap-1.5 bg-[#f1c40f] text-[#2c3e50] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
+            <Inbox className="w-3.5 h-3.5" />
+            Allocation &amp; OTP Dispatch
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">Incoming NGO Requests</h1>
+          <p className="text-xs sm:text-sm text-slate-200 max-w-2xl">
+            Accept full or partial quantities, reject with a reason code, and share the 6-digit Pickup OTP with the NGO&apos;s volunteer.
+          </p>
+        </div>
       </div>
 
       {user && user.role !== 'DONOR' && (
-        <div className="mb-5 bg-amber-50 border border-amber-300 text-amber-900 text-xs font-medium p-3.5 rounded-lg flex items-center gap-2">
+        <div className="bg-amber-50 border border-amber-300 text-amber-900 text-xs font-medium p-3.5 rounded-xl flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
           <span>
             You are currently logged in as <strong>{user.role} ({user.username})</strong>. Please log in with a <strong>DONOR</strong> account to accept requests.
@@ -133,22 +144,26 @@ export default function IncomingRequests() {
       )}
 
       {msg && (
-        <div className="mb-5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium p-3.5 rounded-lg">
-          {msg}
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium p-3.5 rounded-xl flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{msg}</span>
         </div>
       )}
       {error && (
-        <div className="mb-5 bg-red-50 border border-red-200 text-red-700 text-xs font-medium p-3.5 rounded-lg flex items-center gap-2">
+        <div className="bg-red-50 border border-red-200 text-red-700 text-xs font-medium p-3.5 rounded-xl flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {loading ? (
-        <p className="text-sm text-[#666666]">Loading requests...</p>
+        <p className="text-sm text-slate-500">Loading requests...</p>
       ) : requests.length === 0 ? (
-        <div className="bg-white rounded-xl p-10 text-center shadow-sm border border-slate-200">
-          <p className="text-sm font-semibold text-[#2c3e50]">No NGO Requests Yet</p>
+        <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-slate-100">
+          <p className="text-base font-bold text-[#2c3e50]">No NGO Requests Yet</p>
+          <p className="text-xs text-slate-500 mt-1">
+            Verified NGOs will appear here once they claim your active food listings.
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -157,41 +172,45 @@ export default function IncomingRequests() {
             return (
               <div
                 key={req.id}
-                className="bg-white rounded-xl p-6 shadow-sm border-l-4 border-[#f1c40f] flex flex-col lg:flex-row lg:items-center justify-between gap-6"
+                className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 border-l-4 border-l-[#f1c40f] flex flex-col lg:flex-row lg:items-center justify-between gap-6"
               >
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2.5">
-                    <h3 className="text-lg font-semibold text-[#2c3e50]">
-                      {req.food_name}
-                    </h3>
-                    <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-[#2c3e50]">
+                    <h3 className="text-lg font-bold text-[#2c3e50]">{req.food_name}</h3>
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-[#2c3e50]">
                       {req.status}
                     </span>
-                    <span className="text-[11px] text-gray-500">
-                      Available in pool: <strong>{req.donation_available_quantity} {req.donation_unit}</strong>
+                    <span className="text-[11px] text-slate-500">
+                      Available in pool:{' '}
+                      <strong className="text-emerald-700">
+                        {req.donation_available_quantity} {req.donation_unit}
+                      </strong>
                     </span>
                   </div>
 
-                  <p className="text-xs text-[#555555]">
-                    NGO: <strong>{req.ngo_name}</strong> ({req.distribution_point_name}) • Requested:{' '}
+                  <p className="text-xs text-slate-600">
+                    NGO: <strong className="text-[#2c3e50]">{req.ngo_name}</strong> (
+                    {req.distribution_point_name}) • Requested:{' '}
                     <strong>
                       {req.requested_quantity} {req.donation_unit}
                     </strong>
                     {req.min_acceptable_quantity && (
-                      <span className="text-amber-700">
+                      <span className="text-amber-700 font-medium">
                         {' '}
                         (Min acceptable: {req.min_acceptable_quantity} {req.donation_unit})
                       </span>
                     )}
                   </p>
 
-                  <p className="text-xs text-[#666666] flex items-center gap-1.5">
+                  <p className="text-xs text-slate-500 flex items-center gap-1.5">
                     <Users className="w-3.5 h-3.5 text-[#2c3e50]" />
                     <span>Expected Beneficiaries: {req.expected_beneficiaries}</span>
                   </p>
 
                   {req.message && (
-                    <p className="text-xs italic text-slate-500">&quot;{req.message}&quot;</p>
+                    <p className="text-xs italic text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg inline-block">
+                      &quot;{req.message}&quot;
+                    </p>
                   )}
                 </div>
 
@@ -200,8 +219,10 @@ export default function IncomingRequests() {
                   {req.status === 'PENDING' && (
                     <>
                       <div className="flex flex-wrap items-center gap-2">
-                        <div className="flex items-center gap-1.5 bg-gray-50 border rounded-md px-2.5 py-1.5">
-                          <span className="text-[11px] text-gray-500">Accept Qty:</span>
+                        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
+                          <span className="text-[11px] font-semibold text-slate-500">
+                            Accept Qty:
+                          </span>
                           <input
                             type="number"
                             step="0.01"
@@ -211,12 +232,12 @@ export default function IncomingRequests() {
                             onChange={(e) =>
                               setAcceptQty({ ...acceptQty, [req.id]: e.target.value })
                             }
-                            className="w-20 text-xs font-semibold text-[#2c3e50] bg-white border rounded px-2 py-1"
+                            className="w-20 text-xs font-bold text-[#2c3e50] bg-white border border-slate-200 rounded-lg px-2 py-1"
                           />
                         </div>
                         <button
                           onClick={() => handleAccept(req)}
-                          className="bg-[#2c3e50] hover:bg-[#f1c40f] text-white hover:text-[#2c3e50] text-xs font-semibold px-4 py-2 rounded-md flex items-center gap-1.5 transition cursor-pointer"
+                          className="bg-[#2c3e50] hover:bg-[#f1c40f] text-white hover:text-[#2c3e50] text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 transition cursor-pointer"
                         >
                           <CheckCircle2 className="w-4 h-4" />
                           <span>Accept</span>
@@ -229,7 +250,7 @@ export default function IncomingRequests() {
                           onChange={(e) =>
                             setRejectReason({ ...rejectReason, [req.id]: e.target.value })
                           }
-                          className="border border-gray-300 rounded-md px-2.5 py-1.5 text-xs bg-white"
+                          className="border border-slate-200 rounded-xl px-3 py-1.5 text-xs bg-slate-50 text-[#2c3e50]"
                         >
                           <option value="INSUFFICIENT_QUANTITY">Insufficient Quantity</option>
                           <option value="TIMING_MISMATCH">Pickup Timing Mismatch</option>
@@ -238,7 +259,7 @@ export default function IncomingRequests() {
                         </select>
                         <button
                           onClick={() => handleReject(req)}
-                          className="bg-red-50 hover:bg-red-600 text-red-700 hover:text-white text-xs font-semibold px-3.5 py-1.5 rounded-md flex items-center gap-1 transition cursor-pointer"
+                          className="bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white text-xs font-bold px-3.5 py-1.5 rounded-xl flex items-center gap-1 transition cursor-pointer"
                         >
                           <XCircle className="w-3.5 h-3.5" />
                           <span>Reject</span>
@@ -249,23 +270,27 @@ export default function IncomingRequests() {
 
                   {['ACCEPTED', 'PARTIALLY_ACCEPTED'].includes(req.status) &&
                     (assignment ? (
-                      <div className="bg-[#2c3e50] text-white px-4 py-3 rounded-lg text-xs space-y-1">
-                        <p className="flex items-center gap-1.5 text-[#f1c40f] font-semibold">
+                      <div className="bg-[#2c3e50] text-white px-4 py-3.5 rounded-xl text-xs space-y-1 shadow-sm">
+                        <p className="flex items-center gap-1.5 text-[#f1c40f] font-bold text-sm">
                           <KeyRound className="w-4 h-4" />
                           <span>Pickup OTP: {assignment.verification_code}</span>
                         </p>
                         <p className="text-slate-200">
-                          Volunteer: {assignment.volunteer_name} ({assignment.status})
+                          Volunteer: <strong>{assignment.volunteer_name}</strong> ({assignment.status})
                         </p>
                         <p className="text-slate-300 text-[11px]">
                           Allocated: {req.accepted_quantity} {req.donation_unit}
                         </p>
                       </div>
                     ) : (
-                      <div className="bg-amber-50 border border-amber-200 text-amber-800 px-3.5 py-2.5 rounded-lg text-xs flex items-center gap-2">
+                      <div className="bg-amber-50 border border-amber-200 text-amber-800 px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2">
                         <Clock className="w-4 h-4 shrink-0" />
                         <span>
-                          Allocated <strong>{req.accepted_quantity} {req.donation_unit}</strong> — waiting for NGO to assign volunteer.
+                          Allocated{' '}
+                          <strong>
+                            {req.accepted_quantity} {req.donation_unit}
+                          </strong>{' '}
+                          — waiting for NGO to assign volunteer.
                         </span>
                       </div>
                     ))}
